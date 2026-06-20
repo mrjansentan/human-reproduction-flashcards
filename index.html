@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcard Flip App</title>
+  <style>
+    :root {
+      --bg: #f7eadf;
+      --panel: #fffdf8;
+      --card: #ffffff;
+      --ink: #242424;
+      --muted: #4b4b4b;
+      --accent: #ffd23f;
+      --accent-dark: #e8b800;
+      --teal: #18a69a;
+      --pink: #ef4b91;
+      --purple: #91a7ff;
+      --green: #55e08a;
+      --border: #242424;
+      --shadow: 9px 9px 0 #242424;
+      --shadow-small: 5px 5px 0 #242424;
+      --radius: 28px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at 8% 76%, rgba(239, 75, 145, 0.95) 0 58px, transparent 60px),
+        radial-gradient(circle at 92% 16%, rgba(145, 167, 255, 0.95) 0 54px, transparent 56px),
+        radial-gradient(circle at 91% 82%, rgba(255, 210, 63, 0.95) 0 58px, transparent 60px),
+        radial-gradient(circle at 5% 24%, rgba(24, 166, 154, 0.95) 0 52px, transparent 54px),
+        var(--bg);
+      color: var(--ink);
+      display: flex;
+      justify-content: center;
+      padding: 24px;
+    }
+
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      width: 86px;
+      height: 86px;
+      border: 4px solid var(--border);
+      border-radius: 50%;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    body::before {
+      left: -30px;
+      top: 22%;
+      box-shadow: 0 0 0 34px var(--teal);
+    }
+
+    body::after {
+      right: -28px;
+      bottom: 18%;
+      box-shadow: 0 0 0 34px var(--accent);
+    }
+
+    .app {
+      width: min(100%, 1120px);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .title-block {
+      background: var(--panel);
+      border: 4px solid var(--border);
+      border-radius: 34px;
+      box-shadow: var(--shadow);
+      padding: 28px 34px;
+      flex: 1;
+      position: relative;
+      overflow: visible;
+    }
+
+    .title-block::after {
+      content: "★";
+      position: absolute;
+      top: -34px;
+      right: 62px;
+      width: 86px;
+      height: 86px;
+      display: grid;
+      place-items: center;
+      background: var(--purple);
+      border: 4px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow-small);
+      transform: rotate(-12deg);
+      font-size: 2.2rem;
+      color: var(--ink);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(3.1rem, 8vw, 6.2rem);
+      line-height: 0.9;
+      letter-spacing: -0.07em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    .creator {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .stats {
+      background: var(--purple);
+      border: 4px solid var(--border);
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+      padding: 22px 30px;
+      min-width: 210px;
+      text-align: center;
+      align-self: flex-start;
+      transform: rotate(0.5deg);
+    }
+
+    .stats strong {
+      display: block;
+      font-size: 2rem;
+    }
+
+    .stats span {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .main-panel {
+      background: rgba(255, 253, 248, 0.96);
+      border: 4px solid var(--border);
+      border-radius: 38px;
+      box-shadow: 12px 12px 0 var(--border);
+      padding: 18px 34px 34px;
+      position: relative;
+      min-height: 660px;
+    }
+
+    .main-panel::before {
+      content: "";
+      position: absolute;
+      width: 74px;
+      height: 74px;
+      left: 42px;
+      top: -34px;
+      background: var(--teal);
+      border: 4px solid var(--border);
+      box-shadow: var(--shadow-small);
+      border-radius: 22px;
+      transform: rotate(7deg);
+      z-index: 0;
+    }
+
+    .main-panel::after {
+      content: "";
+      position: absolute;
+      width: 86px;
+      height: 54px;
+      right: 42px;
+      top: -28px;
+      background: var(--purple);
+      border: 4px solid var(--border);
+      box-shadow: var(--shadow-small);
+      border-radius: 999px;
+      transform: rotate(1deg);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .deck-name {
+      display: flex;
+      justify-content: flex-start;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 0;
+      position: relative;
+      z-index: 3;
+      min-height: 32px;
+    }
+
+    .deck-name.compact {
+      margin-bottom: 0;
+    }
+
+    .deck-name h2 {
+      margin: 0;
+      font-size: 1.35rem;
+    }
+
+    .pill {
+      border: 4px solid var(--border);
+      border-radius: 999px;
+      padding: 10px 20px;
+      background: var(--accent);
+      font-size: 0.95rem;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: var(--shadow-small);
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    .card-stage {
+      position: relative;
+      z-index: 2;
+      perspective: 1400px;
+      width: 100%;
+      max-width: 980px;
+      margin: -4px auto 28px;
+      display: grid;
+      place-items: center;
+      overflow: visible;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
+    }
+
+    .flashcard {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9.2;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform 0.55s ease;
+      outline: none;
+      overflow: visible;
+    }
+
+    .flashcard.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      background: transparent;
+      backface-visibility: hidden;
+      overflow: visible;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+      background: transparent;
+    }
+
+    .card-face img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center center;
+      display: block;
+      margin: auto;
+      max-height: 100%;
+    }
+
+    .fallback-text {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-size: clamp(1.6rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.15;
+      padding: 20px;
+    }
+
+
+    .tap-hint {
+      width: fit-content;
+      max-width: 92%;
+      margin: 34px auto 22px;
+      padding: 6px 14px;
+      background: var(--panel);
+      border: 3px solid var(--border);
+      border-radius: 999px;
+      box-shadow: var(--shadow-small);
+      text-align: center;
+      color: var(--ink);
+      font-size: 0.9rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      position: relative;
+      z-index: 10;
+      clear: both;
+    }
+
+    .controls {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    button {
+      border: 4px solid var(--border);
+      background: var(--card);
+      color: var(--ink);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: var(--shadow-small);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.01em;
+    }
+
+    button:hover {
+      background: var(--accent);
+    }
+
+    button:active {
+      transform: translate(4px, 4px);
+      box-shadow: 0 0 0 #111827;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: var(--ink);
+    }
+
+    button.primary:hover {
+      background: var(--accent-dark);
+    }
+
+    button.good {
+      background: var(--green);
+      color: var(--ink);
+    }
+
+    .thumbs {
+      position: relative;
+      z-index: 2;
+      margin-top: 22px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .thumb {
+      width: 48px;
+      height: 44px;
+      min-width: 48px;
+      min-height: 44px;
+      border: 4px solid var(--border);
+      border-radius: 14px;
+      background: var(--card);
+      font-size: 1rem;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0;
+      box-shadow: var(--shadow-small);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .thumb:hover {
+      background: var(--purple);
+    }
+
+    .thumb.active {
+      background: var(--accent);
+      transform: translate(-1px, -1px);
+      box-shadow: 6px 6px 0 var(--border);
+    }
+
+    .thumb.done {
+      background: var(--green);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      margin-top: 18px;
+      font-size: 0.9rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .completion-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(247, 234, 223, 0.76);
+      backdrop-filter: blur(3px);
+    }
+
+    .completion-overlay.hidden {
+      display: none;
+    }
+
+    .completion-card {
+      position: relative;
+      width: min(92vw, 460px);
+      background: var(--accent);
+      border: 5px solid var(--border);
+      border-radius: 28px;
+      box-shadow: 14px 14px 0 var(--border);
+      padding: 30px 24px;
+      text-align: center;
+      animation: popCard 0.35s ease both;
+    }
+
+    .completion-card h2 {
+      margin: 0;
+      font-size: clamp(3rem, 12vw, 5.8rem);
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+      text-transform: uppercase;
+    }
+
+    .completion-card p {
+      margin: 12px 0 22px;
+      font-size: 1.2rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .completion-burst {
+      position: absolute;
+      top: -28px;
+      right: -22px;
+      width: 72px;
+      height: 72px;
+      display: grid;
+      place-items: center;
+      background: var(--pink);
+      border: 5px solid var(--border);
+      border-radius: 50%;
+      box-shadow: var(--shadow-small);
+      font-size: 2rem;
+      animation: spinPop 0.7s ease both;
+    }
+
+    .confetti-piece {
+      position: fixed;
+      top: -18px;
+      z-index: 60;
+      width: 12px;
+      height: 18px;
+      border: 2px solid var(--border);
+      animation: confettiFall linear forwards;
+      pointer-events: none;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(-20px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(105vh) rotate(720deg);
+        opacity: 0.95;
+      }
+    }
+
+    @keyframes popCard {
+      from {
+        transform: scale(0.88) rotate(-2deg);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1) rotate(-1deg);
+        opacity: 1;
+      }
+    }
+
+    @keyframes spinPop {
+      from {
+        transform: scale(0.6) rotate(-120deg);
+      }
+      to {
+        transform: scale(1) rotate(8deg);
+      }
+    }
+
+
+    @media (max-width: 760px) {
+      body {
+        padding: 14px;
+      }
+
+      header {
+        flex-direction: column;
+      }
+
+      .title-block::after {
+        right: 22px;
+        top: -26px;
+        width: 64px;
+        height: 64px;
+      }
+
+      .stats {
+        width: 100%;
+      }
+
+      .main-panel::before {
+      content: "";
+      position: absolute;
+      width: 76px;
+      height: 28px;
+      left: 26px;
+      top: -18px;
+      background: var(--cyan);
+      border: 4px solid var(--border);
+      box-shadow: var(--shadow-small);
+      transform: rotate(-2deg);
+      z-index: 0;
+    }
+
+    .main-panel::after {
+      content: "";
+      position: absolute;
+      width: 54px;
+      height: 54px;
+      right: 28px;
+      top: -24px;
+      background: var(--pink);
+      border: 4px solid var(--border);
+      box-shadow: var(--shadow-small);
+      border-radius: 50%;
+      transform: rotate(5deg);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .deck-name {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .controls {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      button.wide {
+        grid-column: span 2;
+      }
+
+      .main-panel {
+        padding: 16px;
+        min-height: auto;
+      }
+
+      .flashcard {
+        aspect-ratio: 16 / 10;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <section class="title-block">
+        <h1>FLASHCARD<br>FLIP</h1>
+        <p class="creator">Created by Mr. Jansen Tan</p>
+      </section>
+
+      <section class="stats" aria-live="polite">
+        <strong id="progressNumber">1 / 6</strong>
+        <span id="knownNumber">0 marked known</span>
+      </section>
+    </header>
+
+    <section class="main-panel">
+      <div class="deck-name compact">
+        <span class="pill" id="modePill">Front</span>
+      </div>
+
+      <div class="card-stage">
+        <article
+          class="flashcard"
+          id="flashcard"
+          tabindex="0"
+          role="button"
+          aria-label="Flashcard. Press enter or space to flip."
+        >
+          <section class="card-face card-front">
+            <img id="frontImage" alt="Front of flashcard" />
+            <div id="frontText" class="fallback-text hidden"></div>
+          </section>
+
+          <section class="card-face card-back">
+            <img id="backImage" alt="Back of flashcard" />
+            <div id="backText" class="fallback-text hidden"></div>
+          </section>
+        </article>
+      </div>
+
+      <p class="tap-hint">Tap the card, or press Space / Enter to flip.</p>
+
+      <div class="controls">
+        <button id="prevBtn">← Previous</button>
+        <button id="flipBtn" class="primary">Flip</button>
+        <button id="nextBtn">Next →</button>
+        <button id="shuffleBtn">Shuffle</button>
+        <button id="knownBtn" class="good wide">Mark Known</button>
+      </div>
+
+      <div class="thumbs" id="thumbs"></div>
+    </section>
+
+    <section class="completion-overlay hidden" id="completionOverlay" aria-live="polite">
+      <div class="completion-card">
+        <div class="completion-burst">★</div>
+        <h2>Ta-da!</h2>
+        <p>All cards complete.</p>
+        <button id="restartBtn" class="primary">Restart Deck</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    /*
+      HOW TO EDIT YOUR FLASHCARDS
+
+      Option A: Use local images uploaded together with this file on Netlify.
+      Example:
+      front: "images/card1-front.jpg",
+      back: "images/card1-back.jpg"
+
+      Option B: Use online direct image links.
+      Example:
+      front: "https://yourwebsite.com/card1-front.jpg",
+      back: "https://yourwebsite.com/card1-back.jpg"
+
+      You may also use text instead of images.
+      Example:
+      frontText: "What is the test for carbon dioxide?",
+      backText: "Bubble the gas through limewater. It turns milky."
+    */
+
+    const deckTitle = "Chemistry Flashcards";
+
+    const cards = [
+      {
+        front: "images/card1-front.jpg",
+        back: "images/card1-back.jpg",
+        frontText: "Image missing: card1-front.jpg",
+        backText: "Image missing: card1-back.jpg"
+      },
+      {
+        front: "images/card2-front.jpg",
+        back: "images/card2-back.jpg",
+        frontText: "Image missing: card2-front.jpg",
+        backText: "Image missing: card2-back.jpg"
+      },
+      {
+        front: "images/card3-front.jpg",
+        back: "images/card3-back.jpg",
+        frontText: "Image missing: card3-front.jpg",
+        backText: "Image missing: card3-back.jpg"
+      },
+      {
+        front: "images/card4-front.jpg",
+        back: "images/card4-back.jpg",
+        frontText: "Image missing: card4-front.jpg",
+        backText: "Image missing: card4-back.jpg"
+      },
+      {
+        front: "images/card5-front.jpg",
+        back: "images/card5-back.jpg",
+        frontText: "Image missing: card5-front.jpg",
+        backText: "Image missing: card5-back.jpg"
+      },
+      {
+        front: "images/card6-front.jpg",
+        back: "images/card6-back.jpg",
+        frontText: "Image missing: card6-front.jpg",
+        backText: "Image missing: card6-back.jpg"
+      },
+      {
+        front: "images/card7-front.jpg",
+        back: "images/card7-back.jpg",
+        frontText: "Image missing: card7-front.jpg",
+        backText: "Image missing: card7-back.jpg"
+      },
+      {
+        front: "images/card8-front.jpg",
+        back: "images/card8-back.jpg",
+        frontText: "Image missing: card8-front.jpg",
+        backText: "Image missing: card8-back.jpg"
+      },
+      {
+        front: "images/card9-front.jpg",
+        back: "images/card9-back.jpg",
+        frontText: "Image missing: card9-front.jpg",
+        backText: "Image missing: card9-back.jpg"
+      },
+      {
+        front: "images/card10-front.jpg",
+        back: "images/card10-back.jpg",
+        frontText: "Image missing: card10-front.jpg",
+        backText: "Image missing: card10-back.jpg"
+      },
+      {
+        front: "images/card11-front.jpg",
+        back: "images/card11-back.jpg",
+        frontText: "Image missing: card11-front.jpg",
+        backText: "Image missing: card11-back.jpg"
+      },
+      {
+        front: "images/card12-front.jpg",
+        back: "images/card12-back.jpg",
+        frontText: "Image missing: card12-front.jpg",
+        backText: "Image missing: card12-back.jpg"
+      },
+      {
+        front: "images/card13-front.jpg",
+        back: "images/card13-back.jpg",
+        frontText: "Image missing: card13-front.jpg",
+        backText: "Image missing: card13-back.jpg"
+      },
+      {
+        front: "images/card14-front.jpg",
+        back: "images/card14-back.jpg",
+        frontText: "Image missing: card14-front.jpg",
+        backText: "Image missing: card14-back.jpg"
+      },
+      {
+        front: "images/card15-front.jpg",
+        back: "images/card15-back.jpg",
+        frontText: "Image missing: card15-front.jpg",
+        backText: "Image missing: card15-back.jpg"
+      },
+      {
+        front: "images/card16-front.jpg",
+        back: "images/card16-back.jpg",
+        frontText: "Image missing: card16-front.jpg",
+        backText: "Image missing: card16-back.jpg"
+      },
+      {
+        front: "images/card17-front.jpg",
+        back: "images/card17-back.jpg",
+        frontText: "Image missing: card17-front.jpg",
+        backText: "Image missing: card17-back.jpg"
+      },
+      {
+        front: "images/card18-front.jpg",
+        back: "images/card18-back.jpg",
+        frontText: "Image missing: card18-front.jpg",
+        backText: "Image missing: card18-back.jpg"
+      },
+      {
+        front: "images/card19-front.jpg",
+        back: "images/card19-back.jpg",
+        frontText: "Image missing: card19-front.jpg",
+        backText: "Image missing: card19-back.jpg"
+      },
+      {
+        front: "images/card20-front.jpg",
+        back: "images/card20-back.jpg",
+        frontText: "Image missing: card20-front.jpg",
+        backText: "Image missing: card20-back.jpg"
+      },
+      {
+        front: "images/card21-front.jpg",
+        back: "images/card21-back.jpg",
+        frontText: "Image missing: card21-front.jpg",
+        backText: "Image missing: card21-back.jpg"
+      },
+      {
+        front: "images/card22-front.jpg",
+        back: "images/card22-back.jpg",
+        frontText: "Image missing: card22-front.jpg",
+        backText: "Image missing: card22-back.jpg"
+      },
+      {
+        front: "images/card23-front.jpg",
+        back: "images/card23-back.jpg",
+        frontText: "Image missing: card23-front.jpg",
+        backText: "Image missing: card23-back.jpg"
+      },
+      {
+        front: "images/card24-front.jpg",
+        back: "images/card24-back.jpg",
+        frontText: "Image missing: card24-front.jpg",
+        backText: "Image missing: card24-back.jpg"
+      },
+      {
+        front: "images/card25-front.jpg",
+        back: "images/card25-back.jpg",
+        frontText: "Image missing: card25-front.jpg",
+        backText: "Image missing: card25-back.jpg"
+      },
+      {
+        front: "images/card26-front.jpg",
+        back: "images/card26-back.jpg",
+        frontText: "Image missing: card26-front.jpg",
+        backText: "Image missing: card26-back.jpg"
+      },
+      {
+        front: "images/card27-front.jpg",
+        back: "images/card27-back.jpg",
+        frontText: "Image missing: card27-front.jpg",
+        backText: "Image missing: card27-back.jpg"
+      },
+      {
+        front: "images/card28-front.jpg",
+        back: "images/card28-back.jpg",
+        frontText: "Image missing: card28-front.jpg",
+        backText: "Image missing: card28-back.jpg"
+      },
+      {
+        front: "images/card29-front.jpg",
+        back: "images/card29-back.jpg",
+        frontText: "Image missing: card29-front.jpg",
+        backText: "Image missing: card29-back.jpg"
+      },
+      {
+        front: "images/card30-front.jpg",
+        back: "images/card30-back.jpg",
+        frontText: "Image missing: card30-front.jpg",
+        backText: "Image missing: card30-back.jpg"
+      },
+      {
+        front: "images/card31-front.jpg",
+        back: "images/card31-back.jpg",
+        frontText: "Image missing: card31-front.jpg",
+        backText: "Image missing: card31-back.jpg"
+      },
+      {
+        front: "images/card32-front.jpg",
+        back: "images/card32-back.jpg",
+        frontText: "Image missing: card32-front.jpg",
+        backText: "Image missing: card32-back.jpg"
+      },
+      {
+        front: "images/card33-front.jpg",
+        back: "images/card33-back.jpg",
+        frontText: "Image missing: card33-front.jpg",
+        backText: "Image missing: card33-back.jpg"
+      },
+      {
+        front: "images/card34-front.jpg",
+        back: "images/card34-back.jpg",
+        frontText: "Image missing: card34-front.jpg",
+        backText: "Image missing: card34-back.jpg"
+      },
+      {
+        front: "images/card35-front.jpg",
+        back: "images/card35-back.jpg",
+        frontText: "Image missing: card35-front.jpg",
+        backText: "Image missing: card35-back.jpg"
+      },
+      {
+        front: "images/card36-front.jpg",
+        back: "images/card36-back.jpg",
+        frontText: "Image missing: card36-front.jpg",
+        backText: "Image missing: card36-back.jpg"
+      },
+      {
+        front: "images/card37-front.jpg",
+        back: "images/card37-back.jpg",
+        frontText: "Image missing: card37-front.jpg",
+        backText: "Image missing: card37-back.jpg"
+      },
+      {
+        front: "images/card38-front.jpg",
+        back: "images/card38-back.jpg",
+        frontText: "Image missing: card38-front.jpg",
+        backText: "Image missing: card38-back.jpg"
+      },
+      {
+        front: "images/card39-front.jpg",
+        back: "images/card39-back.jpg",
+        frontText: "Image missing: card39-front.jpg",
+        backText: "Image missing: card39-back.jpg"
+      },
+      {
+        front: "images/card40-front.jpg",
+        back: "images/card40-back.jpg",
+        frontText: "Image missing: card40-front.jpg",
+        backText: "Image missing: card40-back.jpg"
+      }
+    ];
+
+    let currentIndex = 0;
+    let isFlipped = false;
+    const knownCards = new Set();
+
+
+    let audioContext = null;
+
+    function playTone(frequency, duration, type = "square", gainValue = 0.045) {
+      try {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+
+        gain.gain.setValueAtTime(0, audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(gainValue, audioContext.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + duration);
+      } catch (error) {
+        // Sound is optional. Some browsers may block audio until the first user action.
+      }
+    }
+
+    function playButtonSound() {
+      playTone(520, 0.07, "square", 0.035);
+    }
+
+    function playFlipSound() {
+      playTone(isFlipped ? 420 : 620, 0.09, "triangle", 0.04);
+      setTimeout(() => playTone(isFlipped ? 620 : 420, 0.08, "triangle", 0.03), 55);
+    }
+
+    function playTaDaSound() {
+      playTone(523, 0.12, "triangle", 0.05);
+      setTimeout(() => playTone(659, 0.12, "triangle", 0.05), 110);
+      setTimeout(() => playTone(784, 0.18, "triangle", 0.055), 220);
+      setTimeout(() => playTone(1046, 0.24, "triangle", 0.05), 360);
+    }
+
+    function launchConfetti() {
+      const colours = ["#ffd23f", "#18a69a", "#ef4b91", "#91a7ff", "#55e08a", "#ffffff"];
+
+      for (let i = 0; i < 90; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti-piece";
+        piece.style.left = Math.random() * 100 + "vw";
+        piece.style.background = colours[Math.floor(Math.random() * colours.length)];
+        piece.style.animationDuration = (1.8 + Math.random() * 1.4) + "s";
+        piece.style.animationDelay = (Math.random() * 0.45) + "s";
+        piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+        document.body.appendChild(piece);
+
+        setTimeout(() => piece.remove(), 3600);
+      }
+    }
+
+    function showCompletion() {
+      completionOverlay.classList.remove("hidden");
+      playTaDaSound();
+      launchConfetti();
+    }
+
+    function hideCompletion() {
+      completionOverlay.classList.add("hidden");
+    }
+
+    const flashcard = document.getElementById("flashcard");
+    const frontImage = document.getElementById("frontImage");
+    const backImage = document.getElementById("backImage");
+    const frontText = document.getElementById("frontText");
+    const backText = document.getElementById("backText");
+    const progressNumber = document.getElementById("progressNumber");
+    const knownNumber = document.getElementById("knownNumber");
+    const modePill = document.getElementById("modePill");
+    const thumbs = document.getElementById("thumbs");
+    const completionOverlay = document.getElementById("completionOverlay");
+    const restartBtn = document.getElementById("restartBtn");
+
+    function setImageOrText(imageEl, textEl, imageSrc, textValue) {
+      imageEl.classList.add("hidden");
+      textEl.classList.add("hidden");
+      imageEl.removeAttribute("src");
+      textEl.textContent = "";
+
+      if (imageSrc) {
+        imageEl.src = imageSrc;
+        imageEl.classList.remove("hidden");
+
+        imageEl.onerror = () => {
+          imageEl.classList.add("hidden");
+          textEl.textContent = textValue || "Image could not be loaded.";
+          textEl.classList.remove("hidden");
+        };
+      } else {
+        textEl.textContent = textValue || "";
+        textEl.classList.remove("hidden");
+      }
+    }
+
+    function renderCard() {
+      const card = cards[currentIndex];
+
+      setImageOrText(frontImage, frontText, card.front, card.frontText);
+      setImageOrText(backImage, backText, card.back, card.backText);
+
+      isFlipped = false;
+      flashcard.classList.remove("flipped");
+      updateStatus();
+      renderThumbs();
+    }
+
+    function updateStatus() {
+      progressNumber.textContent = `${currentIndex + 1} / ${cards.length}`;
+      knownNumber.textContent = `${knownCards.size} marked known`;
+      modePill.textContent = isFlipped ? "Back" : "Front";
+    }
+
+    function flipCard() {
+      isFlipped = !isFlipped;
+      flashcard.classList.toggle("flipped", isFlipped);
+      playFlipSound();
+      updateStatus();
+    }
+
+    function nextCard() {
+      playButtonSound();
+      currentIndex = (currentIndex + 1) % cards.length;
+      renderCard();
+    }
+
+    function previousCard() {
+      playButtonSound();
+      currentIndex = (currentIndex - 1 + cards.length) % cards.length;
+      renderCard();
+    }
+
+    function markKnown() {
+      playButtonSound();
+      knownCards.add(currentIndex);
+      renderThumbs();
+      updateStatus();
+
+      if (knownCards.size === cards.length) {
+        showCompletion();
+        return;
+      }
+
+      currentIndex = (currentIndex + 1) % cards.length;
+      renderCard();
+    }
+
+    function shuffleCards() {
+      playButtonSound();
+      for (let i = cards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cards[i], cards[j]] = [cards[j], cards[i]];
+      }
+      currentIndex = 0;
+      knownCards.clear();
+      hideCompletion();
+      renderCard();
+    }
+
+    function renderThumbs() {
+      thumbs.innerHTML = "";
+
+      cards.forEach((_, index) => {
+        const thumb = document.createElement("button");
+        thumb.className = "thumb";
+        thumb.textContent = index + 1;
+        thumb.setAttribute("aria-label", `Go to card ${index + 1}`);
+
+        if (index === currentIndex) thumb.classList.add("active");
+        if (knownCards.has(index)) thumb.classList.add("done");
+
+        thumb.addEventListener("click", () => {
+          playButtonSound();
+          currentIndex = index;
+          renderCard();
+        });
+
+        thumbs.appendChild(thumb);
+      });
+    }
+
+    flashcard.addEventListener("click", flipCard);
+    document.getElementById("flipBtn").addEventListener("click", flipCard);
+    document.getElementById("nextBtn").addEventListener("click", nextCard);
+    document.getElementById("prevBtn").addEventListener("click", previousCard);
+    document.getElementById("knownBtn").addEventListener("click", markKnown);
+    document.getElementById("shuffleBtn").addEventListener("click", shuffleCards);
+
+    restartBtn.addEventListener("click", () => {
+      playButtonSound();
+      knownCards.clear();
+      currentIndex = 0;
+      hideCompletion();
+      renderCard();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight") nextCard();
+      if (event.key === "ArrowLeft") previousCard();
+      if (event.key === " " || event.key === "Enter") {
+        event.preventDefault();
+        flipCard();
+      }
+    });
+
+    renderCard();
+  </script>
+</body>
+</html>
